@@ -18,10 +18,10 @@ class Consultant
         return $stmt->fetchAll();
     }
 
-    public function addConsultant($user_id, $specialization, $contact)
+    public function addConsultant($name, $specialization, $email)
     {
-        $stmt = $this->pdo->prepare("INSERT INTO consultants (user_id, specialization, contact) VALUES (?, ?, ?)");
-        return $stmt->execute([$user_id, $specialization, $contact]);
+        $stmt = $this->pdo->prepare("INSERT INTO consultants (name, specialization, email) VALUES (?, ?, ?)");
+        return $stmt->execute([$name, $specialization, $email]);
     }
 
     public function deleteConsultantById($id)
@@ -37,10 +37,9 @@ class Consultant
         return $stmt->fetchAll();
     }
 
-    public function updateConsultant($id, $user_id, $specialization, $contact)
+    public function updateConsultant($id, $name, $specialization, $email)
     {
-        $stmt = $this->pdo->prepare("UPDATE `consultants` SET `user_id` = ?, `contact` = ?, `specialization` = ? WHERE `consultants`.`id` = $id");
-        return $stmt->execute([$user_id, $specialization, $contact]);
+        $stmt = $this->pdo->prepare("UPDATE `consultants` SET `name` = ?, `specialization` = ?, `email` = ? WHERE `consultants`.`id` = $id");
+        return $stmt->execute([$name, $specialization, $email]);
     }
-    
 }

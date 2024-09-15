@@ -19,8 +19,9 @@
             $projects = $this->project->getAllProjects();
 
             for ($i=0; $i < count($projects); $i++) { 
-                $client =  $this->client->getClientById($projects[$i]['client_id']);
-                $projects[$i]['client_name'] =  $client[0]['name'];
+                // $client =  $this->client->getClientById($projects[$i]['client_id']);
+                $projects[$i]['client_name'] = "Meeeeeeeeeer";
+                // $projects[$i]['client_name'] =  $client[0]['name'];
             }
 
             require __DIR__ . '/../views/projects/list.php';

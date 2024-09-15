@@ -25,12 +25,12 @@
         <tbody>
             <?php foreach ($projects as $project): ?>
             <tr>
-                <td><?= htmlspecialchars($project['title']) ?></td>
-                <td><?= htmlspecialchars($project['client_name']) ?></td>
-                <td><?= htmlspecialchars($project['consultant_id']) ?></td>
-                <td><?= htmlspecialchars($project['start_date']) ?></td>
-                <td><?= htmlspecialchars($project['end_date']) ?></td>
-                <td><?= htmlspecialchars($project['status']) ?></td>
+                <td><?= htmlspecialchars($project[0]['title']) ?></td>
+                <td><?= htmlspecialchars($project[0]['client_id']) ?></td>
+                <td><?= htmlspecialchars($project[0]['consultant_id']) ?></td>
+                <td><?= htmlspecialchars($project[0]['start_date']) ?></td>
+                <td><?= htmlspecialchars($project[0]['end_date']) ?></td>
+                <td><?= htmlspecialchars($project[0]['status']) ?></td>
                 <td>
                     <form action="/cms_project/public/projects/delete/<?= $project['id'] ?>" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');">
                         <button type="submit">Supprimer</button>

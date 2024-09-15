@@ -22,9 +22,9 @@
         <tbody>
             <?php foreach ($clients as $client): ?>
             <tr>
-                <td><?= htmlspecialchars($client['name']) ?></td>
-                <td><?= htmlspecialchars($client['contact']) ?></td>
-                <td><?= htmlspecialchars($client['email']) ?></td>
+                <td><?= htmlspecialchars($client[0]['name']) ?></td>
+                <td><?= htmlspecialchars($client[0]['contact']) ?></td>
+                <td><?= htmlspecialchars($client[0]['email']) ?></td>
                 <td>
                     <form action="/cms_project/public/clients/delete/<?= $client['id'] ?>/" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?');">
                         <button type="submit">Supprimer</button>

@@ -17,23 +17,21 @@ class ConsultantController
         require __DIR__ . '/../views/consultants/list.php';
     }
 
-    // Méthode pour afficher le formulaire d'ajout de consultant
     public function showCreateForm()
     {
         require __DIR__ . '/../views/consultants/create.php';
     }
 
-    // Méthode pour créer un nouveau consultant
-    public function createConsultant($user_id, $specialization, $contact)
+    public function createConsultant($name, $specialization, $email)
     {
-        if (empty($user_id) || empty($specialization) || empty($contact)) {
+        if (empty($name) || empty($specialization) || empty($email)) {
             die('Tous les champs sont obligatoires.');
         }
-        if (!filter_var($contact, FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             die('Adresse e-mail invalide.');
         }
 
-        $this->consultant->addConsultant($user_id, $specialization, $contact);
+        $this->consultant->addConsultant($name, $specialization, $email);
         header('Location: /cms_project/public/consultants/');
     }
 
@@ -43,9 +41,9 @@ class ConsultantController
         require __DIR__ . '/../views/consultants/edit.php';
     }
 
-    public function updateConsultant($id, $user_id, $specialization, $contact)
+    public function updateConsultant($id, $name, $specialization, $email)
     {
-        if ($this->consultant->updateConsultant($id, $user_id, $specialization, $contact)) {
+        if ($this->consultant->updateConsultant($id, $name, $specialization, $email)) {
             header('Location: /cms_project/public/consultants/');
             exit();
         } else {
