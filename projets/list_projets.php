@@ -1,9 +1,15 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
-include '../db/db_connect.php'; // Connexion à la base de données
+include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
-// Requête pour récupérer tous les projets
-$sql = "SELECT projets.*, clients.nom AS nom_client FROM projets JOIN clients ON projets.id_client = clients.id_client";
-$result = $conn->query($sql);
+try {
+    // Requête pour récupérer tous les clients
+    $sql = "SELECT projets.*, clients.nom AS nom_client FROM projets JOIN clients ON projets.id_client = clients.id_client";
+    $stmt = $conn->query($sql); // Utilisation de query avec PDO
+    $projets = $stmt->fetchAll(PDO::FETCH_ASSOC); // Récupère les résultats sous forme de tableau associatif
+} catch (PDOException $e) {
+    echo "Erreur lors de la récupération des clients : " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -100,7 +106,7 @@ $result = $conn->query($sql);
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item"><a class="nav-link" href="../index.php">Accueil</a></li>
                     <li class="nav-item"><a class="nav-link" href="../clients/list_clients.php">Clients</a></li>
                     <li class="nav-item"><a class="nav-link active" href="./list_projets.php">Projets</a></li>
@@ -110,6 +116,7 @@ $result = $conn->query($sql);
                         <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
@@ -131,18 +138,18 @@ $result = $conn->query($sql);
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
+                if (!empty($projets)) {
+                    foreach($projets as $projet) {
                         echo "<tr>
-                                <td>{$row['id_projet']}</td>
-                                <td>{$row['nom_projet']}</td>
-                                <td>{$row['nom_client']}</td>
-                                <td>{$row['date_debut']}</td>
-                                <td>{$row['date_fin']}</td>
-                                <td>{$row['statut']}</td>
+                                <td>{$projet['id_projet']}</td>
+                                <td>{$projet['nom_projet']}</td>
+                                <td>{$projet['nom_client']}</td>
+                                <td>{$projet['date_debut']}</td>
+                                <td>{$projet['date_fin']}</td>
+                                <td>{$projet['statut']}</td>
                                 <td>
-                                    <a href='edit_projet.php?id={$row['id_projet']}' class='btn btn-warning btn-sm'>Modifier</a>
-                                    <a href='delete_projet.php?id={$row['id_projet']}' class='btn btn-danger btn-sm'>Supprimer</a>
+                                    <a href='edit_projet.php?id={$projet['id_projet']}' class='btn btn-warning btn-sm'>Modifier</a>
+                                    <a href='delete_projet.php?id={$projet['id_projet']}' class='btn btn-danger btn-sm'>Supprimer</a>
                                 </td>
                             </tr>";
                     }

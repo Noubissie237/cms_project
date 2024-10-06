@@ -1,9 +1,15 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
-// Requête pour récupérer tous les clients
-$sql = "SELECT * FROM clients";
-$result = $conn->query($sql);
+try {
+    // Requête pour récupérer tous les clients
+    $sql = "SELECT * FROM clients";
+    $stmt = $conn->query($sql); // Utilisation de query avec PDO
+    $clients = $stmt->fetchAll(PDO::FETCH_ASSOC); // Récupère les résultats sous forme de tableau associatif
+} catch (PDOException $e) {
+    echo "Erreur lors de la récupération des clients : " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -15,14 +21,13 @@ $result = $conn->query($sql);
 
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Image de fond couvrant toute la page */
+        /* Styles personnalisés */
         body {
             background: url('../images/customer.jpg') no-repeat center center fixed;
             background-size: cover;
             font-family: Arial, sans-serif;
         }
 
-        /* Ombre et transparence sur le conteneur principal */
         .container {
             background-color: rgba(255, 255, 255, 0.3);
             padding: 30px;
@@ -30,7 +35,6 @@ $result = $conn->query($sql);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Styles pour le titre */
         h2 {
             text-align: center;
             color: #2c3e50;
@@ -38,7 +42,6 @@ $result = $conn->query($sql);
             margin-bottom: 30px;
         }
 
-        /* Styles personnalisés pour le tableau */
         table.table {
             background-color: #fff;
             border-radius: 8px;
@@ -60,7 +63,6 @@ $result = $conn->query($sql);
             background-color: #f0f8ff;
         }
 
-        /* Boutons stylisés */
         .btn {
             border-radius: 20px;
             font-size: 14px;
@@ -81,7 +83,6 @@ $result = $conn->query($sql);
             border-color: #c0392b;
         }
 
-        /* Pied de page */
         footer {
             margin-top: 30px;
             text-align: center;
@@ -101,7 +102,7 @@ $result = $conn->query($sql);
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="../index.php">Accueil</a>
                     </li>
@@ -121,6 +122,7 @@ $result = $conn->query($sql);
                         <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
@@ -143,18 +145,18 @@ $result = $conn->query($sql);
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
+                if (!empty($clients)) {
                     // Affichage de chaque ligne
-                    while($row = $result->fetch_assoc()) {
+                    foreach ($clients as $client) {
                         echo "<tr>
-                                <td>" . $row['id_client'] . "</td>
-                                <td>" . $row['nom'] . "</td>
-                                <td>" . $row['adresse'] . "</td>
-                                <td>" . $row['email'] . "</td>
-                                <td>" . $row['telephone'] . "</td>
+                                <td>" . $client['id_client'] . "</td>
+                                <td>" . $client['nom'] . "</td>
+                                <td>" . $client['adresse'] . "</td>
+                                <td>" . $client['email'] . "</td>
+                                <td>" . $client['telephone'] . "</td>
                                 <td>
-                                    <a href='edit_client.php?id=" . $row['id_client'] . "' class='btn btn-warning btn-sm'>Modifier</a>
-                                    <a href='delete_client.php?id=" . $row['id_client'] . "' class='btn btn-danger btn-sm'>Supprimer</a>
+                                    <a href='edit_client.php?id=" . $client['id_client'] . "' class='btn btn-warning btn-sm'>Modifier</a>
+                                    <a href='delete_client.php?id=" . $client['id_client'] . "' class='btn btn-danger btn-sm'>Supprimer</a>
                                 </td>
                             </tr>";
                     }

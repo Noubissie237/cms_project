@@ -1,13 +1,14 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = ""; //
-$dbname = "cms_db"; // 
+$host = "localhost";
+$user = "root";
+$pass = ""; //
+$db = "cms_db"; // 
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Échec de la connexion : " . $conn->connect_error);
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "Erreur de connexion : " . $e->getMessage();
 }
 
 ?>

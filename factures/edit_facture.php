@@ -1,42 +1,53 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
 // Vérifier si l'ID de la facture est passé en paramètre
-if (isset($_GET['id'])) {
-    $id_facture = $_GET['id'];
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $id_facture = intval($_GET['id']);
 
-    // Récupérer les informations de la facture
-    $sql = "SELECT * FROM factures WHERE id_facture = $id_facture";
-    $result = $conn->query($sql);
+    // Requête préparée pour récupérer les informations de la facture
+    $sql = "SELECT * FROM factures WHERE id_facture = :id_facture";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id_facture', $id_facture, PDO::PARAM_INT);
+    $stmt->execute();
+    $facture = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($result->num_rows > 0) {
-        $facture = $result->fetch_assoc();
-    } else {
+    if (!$facture) {
         echo "Facture non trouvée";
         exit;
     }
 
-    // Récupérer les projets pour les lier à une facture
-    $projets = $conn->query("SELECT id_projet, nom_projet FROM projets");
+    // Requête préparée pour récupérer les projets pour les lier à une facture
+    $sql_projets = "SELECT id_projet, nom_projet FROM projets";
+    $stmt_projets = $conn->prepare($sql_projets);
+    $stmt_projets->execute();
+    $projets = $stmt_projets->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Vérifier si le formulaire a été soumis pour la mise à jour
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id_projet = $_POST['id_projet'];
+    $id_projet = intval($_POST['id_projet']);
     $montant = $_POST['montant'];
     $date_emission = $_POST['date_emission'];
     $statut = $_POST['statut'];
 
-    // Mettre à jour les informations de la facture
-    $sql = "UPDATE factures SET id_projet='$id_projet', montant='$montant', date_emission='$date_emission', statut='$statut' 
-            WHERE id_facture = $id_facture";
+    // Requête préparée pour mettre à jour les informations de la facture
+    $sql = "UPDATE factures SET id_projet = :id_projet, montant = :montant, date_emission = :date_emission, statut = :statut 
+            WHERE id_facture = :id_facture";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id_projet', $id_projet, PDO::PARAM_INT);
+    $stmt->bindParam(':montant', $montant);
+    $stmt->bindParam(':date_emission', $date_emission);
+    $stmt->bindParam(':statut', $statut);
+    $stmt->bindParam(':id_facture', $id_facture, PDO::PARAM_INT);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
         echo "Facture mise à jour avec succès";
         header("Location: list_factures.php");
         exit;
     } else {
-        echo "Erreur de mise à jour : " . $conn->error;
+        echo "Erreur de mise à jour : " . $conn->errorInfo()[2];
     }
 }
 ?>
@@ -50,10 +61,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         body {
-            background-color: #f4f6f9;
+            background: linear-gradient(to bottom, white, #87CEEB, #4682B4);
             font-family: 'Helvetica Neue', sans-serif;
             color: #333;
+            background-size: cover;
         }
 
         /* Conteneur centré avec style */
@@ -129,20 +146,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="id_projet" class="form-label">Projet</label>
                 <select class="form-control" id="id_projet" name="id_projet" required>
                     <?php
-                    while ($projet = $projets->fetch_assoc()) {
+                    foreach ($projets as $projet) {
                         $selected = ($projet['id_projet'] == $facture['id_projet']) ? 'selected' : '';
-                        echo "<option value='" . $projet['id_projet'] . "' $selected>" . $projet['nom_projet'] . "</option>";
+                        echo "<option value='" . $projet['id_projet'] . "' $selected>" . htmlspecialchars($projet['nom_projet']) . "</option>";
                     }
                     ?>
                 </select>
             </div>
             <div class="mb-3">
                 <label for="montant" class="form-label">Montant</label>
-                <input type="text" class="form-control" id="montant" name="montant" value="<?php echo $facture['montant']; ?>" required>
+                <input type="text" class="form-control" id="montant" name="montant" value="<?php echo htmlspecialchars($facture['montant']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="date_emission" class="form-label">Date d'émission</label>
-                <input type="date" class="form-control" id="date_emission" name="date_emission" value="<?php echo $facture['date_emission']; ?>" required>
+                <input type="date" class="form-control" id="date_emission" name="date_emission" value="<?php echo htmlspecialchars($facture['date_emission']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="statut" class="form-label">Statut</label>

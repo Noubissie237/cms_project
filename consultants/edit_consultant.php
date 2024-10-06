@@ -1,3 +1,4 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
@@ -6,15 +7,20 @@ if (isset($_GET['id'])) {
     $id_consultant = $_GET['id'];
 
     // Récupérer les informations du consultant
-    $sql = "SELECT * FROM consultants WHERE id_consultant = $id_consultant";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $consultant = $result->fetch_assoc();
+    $sql = "SELECT * FROM consultants WHERE id_consultant = :id_consultant";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id_consultant', $id_consultant, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    if ($stmt->rowCount() > 0) {
+        $consultant = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
-        echo "Consultant non trouvé";
+        echo "<div class='alert alert-danger text-center'>Consultant non trouvé</div>";
         exit;
     }
+} else {
+    echo "<div class='alert alert-danger text-center'>ID de consultant invalide</div>";
+    exit;
 }
 
 // Vérifier si le formulaire a été soumis pour la mise à jour
@@ -26,14 +32,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Mise à jour des informations du consultant dans la base de données
     $sql = "UPDATE consultants SET nom='$nom', specialite='$specialite', email='$email', telephone='$telephone' WHERE id_consultant = $id_consultant";
+    $stmt = $conn->prepare($sql);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($stmt->execute()) {
         echo "Consultant mis à jour avec succès";
         // Redirection vers la liste des consultants après la mise à jour
         header("Location: list_consultants.php");
         exit;
     } else {
-        echo "Erreur de mise à jour : " . $conn->error;
+        echo "<div class='alert alert-danger text-center'>Erreur de mise à jour : " . $conn->errorInfo()[2] . "</div>";
     }
 }
 ?>
@@ -48,10 +55,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         body {
-            background-color: #f4f6f9;
+            background: linear-gradient(to bottom, white, #87CEEB, #4682B4);
             font-family: 'Helvetica Neue', sans-serif;
             color: #333;
+            background-size: cover;
         }
 
         /* Conteneur centré avec style */

@@ -1,20 +1,32 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
 // Vérifier si le formulaire a été soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nom = $_POST['nom'];
-    $adresse = $_POST['adresse'];
-    $email = $_POST['email'];
-    $telephone = $_POST['telephone'];
+    // Récupérer et valider les entrées du formulaire
+    $nom = trim($_POST['nom']);
+    $adresse = trim($_POST['adresse']);
+    $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+    $telephone = trim($_POST['telephone']);
 
-    // Insertion dans la base de données
-    $sql = "INSERT INTO clients (nom, adresse, email, telephone) VALUES ('$nom', '$adresse', '$email', '$telephone')";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "<div class='alert alert-success text-center'>Nouveau client ajouté avec succès</div>";
+    // Vérifier si l'email est valide
+    if (!$email) {
+        echo "<div class='alert alert-danger text-center'>Veuillez entrer un email valide</div>";
     } else {
-        echo "<div class='alert alert-danger text-center'>Erreur : " . $conn->error . "</div>";
+        // Insertion dans la base de données avec requêtes préparées
+        $sql = "INSERT INTO clients (nom, adresse, email, telephone) VALUES (:nom, :adresse, :email, :telephone)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':nom', $nom);
+        $stmt->bindParam(':adresse', $adresse);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':telephone', $telephone);
+
+        if ($stmt->execute()) {
+            echo "<div class='alert alert-success text-center'>Nouveau client ajouté avec succès</div>";
+        } else {
+            echo "<div class='alert alert-danger text-center'>Erreur lors de l'ajout du client</div>";
+        }
     }
 }
 ?>
@@ -51,17 +63,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: #2980b9;
             font-weight: bold;
             margin-bottom: 30px;
-        }
-
-        /* Icône centrée au-dessus du titre */
-        .icon-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .icon-container i {
-            font-size: 50px;
-            color: #2980b9;
         }
 
         /* Champs de formulaire stylisés */
@@ -104,6 +105,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
 
+    <style>
+        /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: linear-gradient(to bottom, white, #f4f6f9, grey);
+            font-family: 'Helvetica Neue', sans-serif;
+            color: #333;
+            background-size: cover;
+        }
+
+
+        /* Conteneur centré avec style */
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 60px auto;
+        }
+
+        /* Style pour le titre avec icône */
+        h2 {
+            text-align: center;
+            color: #2980b9;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        /* Champs de formulaire stylisés */
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        /* Style pour les labels */
+        label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        /* Style du bouton */
+        .btn-primary {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1abc9c;
+            border-color: #1abc9c;
+        }
+        
+        /* Alertes stylisées */
+        .alert {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+    </style>
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../">Consultancy System</a>
@@ -111,7 +181,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="../index.php">Accueil</a>
                     </li>
@@ -131,12 +201,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-5">
-        <div class="icon-container">
+        <div class="icon-container text-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="#2980b9" class="bi bi-person-bounding-box" viewBox="0 0 16 16">
             <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5M.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5"/>
             <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>

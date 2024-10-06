@@ -1,5 +1,11 @@
 -- ----------------- |Création de la base de données    
 
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
 CREATE TABLE clients (
     id_client INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
@@ -52,6 +58,11 @@ CREATE INDEX idx_projet_statut ON projets (statut);
 
 -- ----------------- |Insertion des données initiales
 
+-- Insertion de l'utilisateur de base
+INSERT INTO admins (id, nom, password) 
+VALUES 
+(NULL, 'tokyo', SHA1('12345678'));
+
 -- Insertion de clients
 INSERT INTO clients (nom, adresse, email, telephone) 
 VALUES 
@@ -81,3 +92,5 @@ INSERT INTO consultants_projets (id_consultant, id_projet, role)
 VALUES 
 (1, 1, 'Chef de projet'),
 (2, 2, 'Consultant principal');
+
+

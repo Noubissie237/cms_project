@@ -1,3 +1,4 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Connexion à la base de données
 
@@ -9,22 +10,30 @@ $result_projets = $conn->query($sql_projets);
 
 // Traitement du formulaire d'ajout
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id_consultant = $_POST['id_consultant'];
-    $id_projet = $_POST['id_projet'];
-    $role = $_POST['role'];
+    // Validation des entrées
+    $id_consultant = filter_var($_POST['id_consultant'], FILTER_VALIDATE_INT);
+    $id_projet = filter_var($_POST['id_projet'], FILTER_VALIDATE_INT);
+    $role = trim($_POST['role']);
+    
+    if ($id_consultant && $id_projet && !empty($role)) {
+        // Requête préparée pour éviter les injections SQL
+        $sql = "INSERT INTO consultants_projets (id_consultant, id_projet, role) VALUES (:id_consultant, :id_projet, :role)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':id_consultant', $id_consultant, PDO::PARAM_INT);
+        $stmt->bindParam(':id_projet', $id_projet, PDO::PARAM_INT);
+        $stmt->bindParam(':role', $role, PDO::PARAM_STR);
 
-    $sql = "INSERT INTO consultants_projets (id_consultant, id_projet, role) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('iis', $id_consultant, $id_projet, $role);
-
-    if ($stmt->execute()) {
-        echo "<div class='alert alert-success'>Consultant ajouté au projet avec succès.</div>";
+        if ($stmt->execute()) {
+            echo "<div class='alert alert-success'>Mission ajouté au projet avec succès.</div>";
+        } else {
+            echo "<div class='alert alert-danger'>Erreur lors de l'ajout : " . $stmt->errorInfo()[2] . "</div>";
+        }
     } else {
-        echo "<div class='alert alert-danger'>Erreur lors de l'ajout : " . $stmt->error . "</div>";
+        echo "<div class='alert alert-danger'>Veuillez remplir tous les champs correctement.</div>";
     }
 }
 
-$conn->close();
+$conn = null; // Fermeture de la connexion à la base de données
 ?>
 
 <!DOCTYPE html>
@@ -53,6 +62,75 @@ $conn->close();
 </head>
 <body>
 
+    <style>
+        /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: linear-gradient(to bottom, white, #f4f6f9, grey);
+            font-family: 'Helvetica Neue', sans-serif;
+            color: #333;
+            background-size: cover;
+        }
+
+
+        /* Conteneur centré avec style */
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 60px auto;
+        }
+
+        /* Style pour le titre avec icône */
+        h2 {
+            text-align: center;
+            color: #2980b9;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        /* Champs de formulaire stylisés */
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        /* Style pour les labels */
+        label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        /* Style du bouton */
+        .btn-primary {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1abc9c;
+            border-color: #1abc9c;
+        }
+        
+        /* Alertes stylisées */
+        .alert {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+    </style>
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../">Consultancy System</a>
@@ -60,7 +138,7 @@ $conn->close();
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="../">Accueil</a>
                     </li>
@@ -80,6 +158,7 @@ $conn->close();
                         <a class="nav-link active" href="./list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
@@ -90,8 +169,8 @@ $conn->close();
             <div class="mb-3">
                 <label for="id_consultant" class="form-label">Consultant:</label>
                 <select name="id_consultant" id="id_consultant" class="form-select" required>
-                    <?php while ($row = $result_consultants->fetch_assoc()): ?>
-                        <option value="<?= $row['id_consultant'] ?>"><?= $row['nom'] ?></option>
+                    <?php while ($row = $result_consultants->fetch(PDO::FETCH_ASSOC)): ?>
+                        <option value="<?= $row['id_consultant'] ?>"><?= htmlspecialchars($row['nom']) ?></option>
                     <?php endwhile; ?>
                 </select>
             </div>
@@ -99,8 +178,8 @@ $conn->close();
             <div class="mb-3">
                 <label for="id_projet" class="form-label">Projet:</label>
                 <select name="id_projet" id="id_projet" class="form-select" required>
-                    <?php while ($row = $result_projets->fetch_assoc()): ?>
-                        <option value="<?= $row['id_projet'] ?>"><?= $row['nom_projet'] ?></option>
+                    <?php while ($row = $result_projets->fetch(PDO::FETCH_ASSOC)): ?>
+                        <option value="<?= $row['id_projet'] ?>"><?= htmlspecialchars($row['nom_projet']) ?></option>
                     <?php endwhile; ?>
                 </select>
             </div>

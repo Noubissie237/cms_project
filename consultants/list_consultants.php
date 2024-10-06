@@ -1,9 +1,15 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
-// Requête pour obtenir tous les consultants
-$sql = "SELECT * FROM consultants";
-$result = $conn->query($sql);
+try {
+    // Requête pour récupérer tous les consultants
+    $sql = "SELECT * FROM consultants";
+    $stmt = $conn->query($sql); // Utilisation de query avec PDO
+    $consultants = $stmt->fetchAll(PDO::FETCH_ASSOC); // Récupère les résultats sous forme de tableau associatif
+} catch (PDOException $e) {
+    echo "Erreur lors de la récupération des consultants : " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -101,7 +107,7 @@ $result = $conn->query($sql);
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="../index.php">Accueil</a>
                     </li>
@@ -121,6 +127,7 @@ $result = $conn->query($sql);
                         <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
@@ -144,17 +151,17 @@ $result = $conn->query($sql);
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
+                if (!empty($consultants)) {
+                    foreach($consultants as $consultant) {
                         echo "<tr>
-                                <td>" . $row['id_consultant'] . "</td>
-                                <td>" . $row['nom'] . "</td>
-                                <td>" . $row['specialite'] . "</td>
-                                <td>" . $row['email'] . "</td>
-                                <td>" . $row['telephone'] . "</td>
+                                <td>" . $consultant['id_consultant'] . "</td>
+                                <td>" . $consultant['nom'] . "</td>
+                                <td>" . $consultant['specialite'] . "</td>
+                                <td>" . $consultant['email'] . "</td>
+                                <td>" . $consultant['telephone'] . "</td>
                                 <td>
-                                    <a href='edit_consultant.php?id=" . $row['id_consultant'] . "' class='btn btn-warning btn-sm'>Modifier</a>
-                                    <a href='delete_consultant.php?id=" . $row['id_consultant'] . "' class='btn btn-danger btn-sm'>Supprimer</a>
+                                    <a href='edit_consultant.php?id=" . $consultant['id_consultant'] . "' class='btn btn-warning btn-sm'>Modifier</a>
+                                    <a href='delete_consultant.php?id=" . $consultant['id_consultant'] . "' class='btn btn-danger btn-sm'>Supprimer</a>
                                 </td>
                             </tr>";
                     }

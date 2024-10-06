@@ -1,3 +1,5 @@
+<?php include './auth/auth_check.php'; ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -75,7 +77,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="#">Accueil</a>
                     </li>
@@ -95,6 +97,7 @@
                         <a class="nav-link" href="./consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="./connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>

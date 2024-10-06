@@ -1,26 +1,42 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
-include '../db/db_connect.php';
+include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
 // Récupérer les clients pour le menu déroulant
 $clients = $conn->query("SELECT id_client, nom FROM clients");
 
+if (!$clients) {
+    // Affiche une erreur si la requête échoue
+    die("Erreur lors de la récupération des clients : " . $conn->error);
+}
+
 // Vérifier si le formulaire a été soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nom_projet = $_POST['nom_projet'];
-    $description = $_POST['description'];
+    // Validation des données reçues
+    $nom_projet = trim($_POST['nom_projet']);
+    $description = trim($_POST['description']);
     $id_client = $_POST['id_client'];
     $date_debut = $_POST['date_debut'];
     $date_fin = $_POST['date_fin'];
     $statut = $_POST['statut'];
 
-    // Insertion dans la base de données
+    // Utilisation des requêtes préparées pour l'insertion
     $sql = "INSERT INTO projets (nom_projet, description, id_client, date_debut, date_fin, statut) 
-            VALUES ('$nom_projet', '$description', '$id_client', '$date_debut', '$date_fin', '$statut')";
+            VALUES (:nom_projet, :description, :id_client, :date_debut, :date_fin, :statut)";
 
-    if ($conn->query($sql) === TRUE) {
-        echo "Nouveau projet ajouté avec succès";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':nom_projet', $nom_projet);
+    $stmt->bindParam(':description', $description);
+    $stmt->bindParam(':id_client', $id_client, PDO::PARAM_INT);
+    $stmt->bindParam(':date_debut', $date_debut);
+    $stmt->bindParam(':date_fin', $date_fin);
+    $stmt->bindParam(':statut', $statut);
+
+    // Exécution de la requête
+    if ($stmt->execute()) {
+        echo "<div class='alert alert-success'>Nouveau projet ajouté avec succès</div>";
     } else {
-        echo "Erreur : " . $conn->error;
+        echo "<div class='alert alert-danger'>Erreur lors de l'ajout du projet : " . $conn->error . "</div>";
     }
 }
 ?>
@@ -34,12 +50,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Vos styles ici */
+    </style>
+</head>
+<body>
+
+    <style>
         /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         body {
-            background-color: #f4f6f9;
+            background: linear-gradient(to bottom, white, #f4f6f9, grey);
             font-family: 'Helvetica Neue', sans-serif;
             color: #333;
+            background-size: cover;
         }
+
 
         /* Conteneur centré avec style */
         .container {
@@ -57,17 +86,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: #2980b9;
             font-weight: bold;
             margin-bottom: 30px;
-        }
-
-        /* Icône centrée au-dessus du titre */
-        .icon-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .icon-container i {
-            font-size: 50px;
-            color: #2980b9;
         }
 
         /* Champs de formulaire stylisés */
@@ -105,8 +123,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
     </style>
-</head>
-<body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -115,29 +131,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item"><a class="nav-link" href="../index.php">Accueil</a></li>
                     <li class="nav-item"><a class="nav-link" href="../clients/list_clients.php">Clients</a></li>
                     <li class="nav-item"><a class="nav-link active" href="./list_projets.php">Projets</a></li>
                     <li class="nav-item"><a class="nav-link" href="../consultants/list_consultants.php">Consultants</a></li>
                     <li class="nav-item"><a class="nav-link" href="../factures/list_factures.php">Factures</a></li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a></li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
 
     <div class="container mt-5">
-        <div class="icon-container">
-            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="#2980b9" class="bi bi-list-task" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5zM3 3H2v1h1z"/>
-            <path d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1z"/>
-            <path fill-rule="evenodd" d="M1.5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5zM2 7h1v1H2zm0 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm1 .5H2v1h1z"/>
-            </svg>
-        </div>
         <h2>Ajouter un Nouveau Projet</h2>
+
+        <!-- Formulaire d'ajout de projet -->
         <form method="POST" action="add_projet.php">
             <div class="mb-3">
                 <label for="nom_projet" class="form-label">Nom du Projet</label>
@@ -150,9 +160,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="mb-3">
                 <label for="id_client" class="form-label">Client</label>
                 <select class="form-select" id="id_client" name="id_client" required>
-                    <?php while($row = $clients->fetch_assoc()) {
+                    <option value="">Sélectionner un client</option>
+                    <?php
+                    while ($row = $clients->fetch()) {
                         echo "<option value='{$row['id_client']}'>{$row['nom']}</option>";
-                    } ?>
+                    }
+                    ?>
                 </select>
             </div>
             <div class="mb-3">
@@ -171,7 +184,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <option value="annulé">Annulé</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Ajouter</button>
+            <button type="submit" class="btn btn-primary">Ajouter</button>
         </form>
     </div>
 

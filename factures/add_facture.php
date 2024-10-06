@@ -1,24 +1,45 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
 // Récupérer les projets pour les lier à une facture
-$projets = $conn->query("SELECT id_projet, nom_projet FROM projets");
+try {
+    $projets_stmt = $conn->query("SELECT id_projet, nom_projet FROM projets");
+    $projets = $projets_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Erreur lors de la récupération des projets : " . $e->getMessage());
+}
 
 // Vérifier si le formulaire a été soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_projet = $_POST['id_projet'];
-    $montant = $_POST['montant'];
+    $montant = trim($_POST['montant']);
     $date_emission = $_POST['date_emission'];
     $statut = $_POST['statut'];
 
-    // Insertion dans la base de données
-    $sql = "INSERT INTO factures (id_projet, montant, date_emission, statut) 
-            VALUES ('$id_projet', '$montant', '$date_emission', '$statut')";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "Nouvelle facture ajoutée avec succès";
+    // Validation du montant pour s'assurer qu'il s'agit bien d'un nombre
+    if (!is_numeric($montant)) {
+        echo "<div class='alert alert-danger text-center'>Le montant doit être un nombre valide</div>";
     } else {
-        echo "Erreur : " . $conn->error;
+        try {
+            // Utilisation des requêtes préparées pour éviter les injections SQL
+            $sql = "INSERT INTO factures (id_projet, montant, date_emission, statut) 
+                    VALUES (:id_projet, :montant, :date_emission, :statut)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(':id_projet', $id_projet, PDO::PARAM_INT);
+            $stmt->bindParam(':montant', $montant);
+            $stmt->bindParam(':date_emission', $date_emission);
+            $stmt->bindParam(':statut', $statut);
+
+            // Exécution de la requête
+            if ($stmt->execute()) {
+                echo "<div class='alert alert-success text-center'>Nouvelle facture ajoutée avec succès</div>";
+            } else {
+                echo "<div class='alert alert-danger text-center'>Erreur lors de l'ajout de la facture</div>";
+            }
+        } catch (PDOException $e) {
+            echo "<div class='alert alert-danger text-center'>Erreur lors de l'ajout de la facture : " . $e->getMessage() . "</div>";
+        }
     }
 }
 ?>
@@ -94,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #1abc9c;
             border-color: #1abc9c;
         }
-        
+
         /* Alertes stylisées */
         .alert {
             margin-top: 20px;
@@ -105,6 +126,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
 
+    <style>
+        /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: linear-gradient(to bottom, white, #f4f6f9, grey);
+            font-family: 'Helvetica Neue', sans-serif;
+            color: #333;
+            background-size: cover;
+        }
+
+
+        /* Conteneur centré avec style */
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 60px auto;
+        }
+
+        /* Style pour le titre avec icône */
+        h2 {
+            text-align: center;
+            color: #2980b9;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        /* Champs de formulaire stylisés */
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        /* Style pour les labels */
+        label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        /* Style du bouton */
+        .btn-primary {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            background-color: #1abc9c;
+            border-color: #1abc9c;
+        }
+        
+        /* Alertes stylisées */
+        .alert {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+    </style>
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="../">Consultancy System</a>
@@ -112,7 +202,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="../">Accueil</a>
                     </li>
@@ -132,6 +222,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
                     </li>
                 </ul>
+                <a href="../connexion/logout.php" class="btn btn-danger mb-3 ms-auto">Déconnexion</a>
             </div>
         </div>
     </nav>
@@ -150,29 +241,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="mb-3">
                 <label for="id_projet" class="form-label">Projet</label>
                 <select class="form-control" id="id_projet" name="id_projet" required>
-                    <?php
-                    while ($projet = $projets->fetch_assoc()) {
-                        echo "<option value='" . $projet['id_projet'] . "'>" . $projet['nom_projet'] . "</option>";
-                    }
-                    ?>
+                    <?php foreach ($projets as $projet): ?>
+                        <option value="<?= $projet['id_projet'] ?>"><?= $projet['nom_projet'] ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="mb-3">
                 <label for="montant" class="form-label">Montant</label>
-                <input type="text" class="form-control" id="montant" name="montant" required>
+                <input type="text" class="form-control" id="montant" name="montant" placeholder="Montant en FCFA    " required>
             </div>
             <div class="mb-3">
-                <label for="date_emission" class="form-label">Date d'émission</label>
+                <label for="date_emission" class="form-label">Date d'Émission</label>
                 <input type="date" class="form-control" id="date_emission" name="date_emission" required>
             </div>
             <div class="mb-3">
                 <label for="statut" class="form-label">Statut</label>
                 <select class="form-control" id="statut" name="statut" required>
                     <option value="payée">Payée</option>
-                    <option value="non payée">Non payée</option>
-                </select>
+                    <option value="non payée">Non Payée</option>
+                    </select>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Ajouter</button>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Ajouter la Facture</button>
+            </div>
         </form>
     </div>
 

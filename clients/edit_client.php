@@ -1,20 +1,26 @@
+<?php include '../auth/auth_check.php'; ?>
 <?php
 include '../db/db_connect.php'; // Inclure la connexion à la base de données
 
-// Vérifier si l'ID du client est passé en paramètre
-if (isset($_GET['id'])) {
-    $id_client = $_GET['id'];
+// Vérifier si l'ID du client est passé en paramètre et est un entier valide
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $id_client = intval($_GET['id']);
 
-    // Récupérer les informations du client
-    $sql = "SELECT * FROM clients WHERE id_client = $id_client";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $client = $result->fetch_assoc();
+    // Requête préparée pour récupérer les informations du client
+    $sql = "SELECT * FROM clients WHERE id_client = :id_client";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id_client', $id_client, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    if ($stmt->rowCount() > 0) {
+        $client = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
         echo "<div class='alert alert-danger text-center'>Client non trouvé</div>";
         exit;
     }
+} else {
+    echo "<div class='alert alert-danger text-center'>ID de client invalide</div>";
+    exit;
 }
 
 // Vérifier si le formulaire a été soumis pour la mise à jour
@@ -24,16 +30,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $telephone = $_POST['telephone'];
 
-    // Mettre à jour les informations du client dans la base de données
-    $sql = "UPDATE clients SET nom='$nom', adresse='$adresse', email='$email', telephone='$telephone' WHERE id_client = $id_client";
+    // Requête préparée pour mettre à jour les informations du client
+    $sql = "UPDATE clients SET nom = :nom, adresse = :adresse, email = :email, telephone = :telephone WHERE id_client = :id_client";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':nom', $nom);
+    $stmt->bindParam(':adresse', $adresse);
+    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':telephone', $telephone);
+    $stmt->bindParam(':id_client', $id_client, PDO::PARAM_INT);
 
-    if ($conn->query($sql) === TRUE) {
+    // Exécuter la mise à jour et gérer les erreurs
+    if ($stmt->execute()) {
         echo "<div class='alert alert-success text-center'>Client mis à jour avec succès</div>";
         // Redirection vers la liste des clients après la mise à jour
         header("Location: list_clients.php");
         exit;
     } else {
-        echo "<div class='alert alert-danger text-center'>Erreur de mise à jour : " . $conn->error . "</div>";
+        echo "<div class='alert alert-danger text-center'>Erreur de mise à jour : " . $conn->errorInfo()[2] . "</div>";
     }
 }
 ?>
@@ -48,11 +61,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Couleur de fond claire */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         body {
-            background-color: #f4f6f9;
+            background: linear-gradient(to bottom, white, #87CEEB, #4682B4);
             font-family: 'Helvetica Neue', sans-serif;
             color: #333;
+            background-size: cover;
         }
+
 
         /* Conteneur centré avec style */
         .container {
@@ -70,17 +90,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: #2980b9;
             font-weight: bold;
             margin-bottom: 30px;
-        }
-
-        /* Icône centrée au-dessus du titre */
-        .icon-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .icon-container i {
-            font-size: 50px;
-            color: #2980b9;
         }
 
         /* Champs de formulaire stylisés */
@@ -123,24 +132,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
     <div class="container mt-5">
-
         <h2>Modifier Client</h2>
         <form method="POST" action="edit_client.php?id=<?php echo $id_client; ?>">
             <div class="mb-3">
                 <label for="nom" class="form-label">Nom du Client</label>
-                <input type="text" class="form-control" id="nom" name="nom" value="<?php echo $client['nom']; ?>" required>
+                <input type="text" class="form-control" id="nom" name="nom" value="<?php echo htmlspecialchars($client['nom']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="adresse" class="form-label">Adresse</label>
-                <input type="text" class="form-control" id="adresse" name="adresse" value="<?php echo $client['adresse']; ?>">
+                <input type="text" class="form-control" id="adresse" name="adresse" value="<?php echo htmlspecialchars($client['adresse']); ?>">
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="<?php echo $client['email']; ?>" required>
+                <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($client['email']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="telephone" class="form-label">Téléphone</label>
-                <input type="text" class="form-control" id="telephone" name="telephone" value="<?php echo $client['telephone']; ?>" required>
+                <input type="text" class="form-control" id="telephone" name="telephone" value="<?php echo htmlspecialchars($client['telephone']); ?>" required>
             </div>
             <button type="submit" class="btn btn-primary w-100">Mettre à jour</button>
         </form>
