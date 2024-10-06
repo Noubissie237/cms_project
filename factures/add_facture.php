@@ -128,6 +128,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <li class="nav-item">
                         <a class="nav-link active" href="./list_factures.php">Factures</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../consultants_projets/list_consultant_projet.php">Missions</a>
+                    </li>
                 </ul>
             </div>
         </div>
